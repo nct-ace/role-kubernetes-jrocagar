@@ -1,0 +1,109 @@
+---
+- name:  disk sdb
+  set_fact:
+    devsdb: "{{ hostvars[inventory_hostname].ansible_devices.sdb }}"
+
+##
+# create vg and lv
+##
+
+# - name: create physical volume
+#   shell: "pvcreate /dev/{{disk_device}}"
+
+# - name:  create volume group
+#   lvg:
+#     vg: data_vg
+#     pvs: "/dev/{{disk_device}}"
+    
+#- name: vg display data_vg
+#  shell: "vgdisplay data_vg"
+  # ...
+  #  PE Size               4.00 MiB
+  #  Total PE              2559
+  # ...
+
+#* $> lvcreate -l+2559 -n nfs_lv /dev/data_vg
+- name: create logical volume
+  lvol:
+    vg: data_vg
+    lv: nfs_lv
+    size: +100%FREE
+
+- name: display lv
+  shell: "lvs"
+
+- name: create filesystem xfs format
+  filesystem:
+    fstype: xfs
+    dev: /dev/data_vg/nfs_lv
+
+
+- name: create punto de montaje 
+  file:
+     path: /srv/nfs
+     state: directory
+
+- name: include the lv in /etc/fstab to be albe to mount in vm starts
+  lineinfile:
+    path: "/etc/fstab"
+    line: "/dev/data_vg/nfs_lv        /srv/nfs                xfs     defaults        0 0"
+
+# - name: PART1 to check that our mount config is correct
+#  $> mount -a
+
+# - name: PART2 to check that our mount config is correct
+#  $> df -hP
+
+- name: Iinstall nfs packages
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - nfs-utils
+    - net-tools
+
+- name: enable nfs service
+  systemd:
+    name: nfs-server 
+    enabled: yes
+    state: started
+
+- name: exports
+  lineinfile:
+    path: /etc/exports
+    line: "/srv/nfs {{item.ip}}(rw,sync)"
+  loop: "{{ nodes }}"
+
+- name: apply configuration from exports file
+  shell: "exportfs -r"
+
+- name: apply configuration from exports file
+  shell: "exportfs -s"
+
+
+- name: add nfs service firewall
+  firewalld:
+    service: nfs
+    permanent: yes
+    state: enabled
+
+- name: add rpc-bind service firewall
+  firewalld:
+    service: rpc-bind
+    permanent: yes
+    state: enabled
+
+- name: add mountd service firewall
+  firewalld:
+    service: mountd
+    permanent: yes
+    state: enabled
+
+- name: reload firewall
+  systemd:
+    name: firewalld
+    state: reloaded
+
+## COMPROBACION en los nodos master y workers sobre la comparticion de nfs
+# $> "showmount -e 192.168.1.115"
+

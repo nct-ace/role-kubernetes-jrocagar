@@ -1,0 +1,27 @@
+---
+- name:
+  yum:
+    name: wget
+    state: present
+
+- name:
+  shell: "mkdir -p $HOME/.kube"
+
+#- name: 
+#  shell: "cp -i /etc/kubernetes/admin.conf $HOME/.kube/config"
+
+- name:
+  shell: "sudo chown $(id -u):$(id -g) $HOME/.kube/config"
+
+- name:
+  shell: "wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
+
+- name:
+  shell: "kubectl apply -f kube-flannel.yml"
+
+- name:
+  shell: "kubeadm config images pull"
+
+- name:
+  shell: "kubeadm init --apiserver-advertise-address={{item.ip}} --pod-network-cidr=10.244.0.0/16"
+  loop: "{{nodes}}"

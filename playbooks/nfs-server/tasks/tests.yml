@@ -1,0 +1,7 @@
+---
+- name:  disk sdb
+  set_fact:
+    devsdb: "{{ hostvars[inventory_hostname].ansible_devices.sdb }}"
+- name: 
+  debug:
+    msg: "{{devsdb}}"

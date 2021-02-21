@@ -1,0 +1,4 @@
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.56.117 worker.cloudservices.int worker1-test-node
+192.168.56.116 master.cloudservices.int master-test-node

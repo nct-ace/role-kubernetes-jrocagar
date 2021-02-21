@@ -1,0 +1,65 @@
+---
+- name: hosts
+  copy: 
+    src: ../templates/hosts
+    dest: /etc/hosts
+
+- name: install docker 
+  yum:
+    name: docker
+    state: present
+
+- name: enable docker
+  systemd:
+    state: started
+    name: docker
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+#- name: Disable firewall
+#  firewalld:
+#    state: disabled
+
+- name: 
+  firewalld:
+    port: "{{item.port}}"
+    permanent: yes
+    state: enabled
+  loop: "{{ports}}"
+
+- name: Disable swapping
+  shell: "swapoff -a"
+
+- name: Enable the usage of ip6tables
+  shell: "echo 'net.bridge.bridge-nf-call-ip6tables = 1' > /etc/sysctl.d/k8s.conf"
+
+- name: Enable the usage of iptables
+  shell: "echo 'net.bridge.bridge-nf-call-iptables = 1' >> /etc/sysctl.d/k8s.conf"
+
+- name: Enable the usage of iptables
+  shell: "sysctl --system"
+
+- name: Add the Kubernetes repo to rum.repos.d
+  copy: 
+    src: ../templates/kubernetes.repo
+    dest: /etc/yum.repos.d/kubernetes.repo
+
+- name:  Set SELinux in permissive mode 
+  shell: "sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config"
+
+- name: install kubelet kubeadm kubectl
+  yum:
+    name: kubelet
+    state: present
+
+- name: kubeadm
+  yum:
+    name: kubeadm
+    state: present
+
+- name: kubectl
+  yum:
+    name: kubectl
+    state: present

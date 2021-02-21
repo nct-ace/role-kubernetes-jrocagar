@@ -1,0 +1,19 @@
+[nfs]
+192.168.188.3 ansible_user=root ansible_password=alf
+
+[master]
+192.168.188.6 ansible_user=root ansible_password=alf
+
+[worker1]
+192.168.188.7 ansible_user=root ansible_password=alf
+
+[worker2]
+192.168.188.5 ansible_user=root ansible_password=alf
+
+[workers:children]
+worker1
+worker2
+
+[nodes:children]
+master
+workers

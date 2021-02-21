@@ -1,0 +1,11 @@
+---
+- block:
+ # - include_tasks: prerequests.yml
+  - include_tasks: setup_nodes.yml
+  
+  - include_tasks: init_cluster.yml
+    when: inventory_hostname in groups['master']
+  
+
+
+
