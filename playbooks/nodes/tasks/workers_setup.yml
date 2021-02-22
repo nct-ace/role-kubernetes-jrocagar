@@ -1,0 +1,16 @@
+---
+- name: 
+  firewalld:
+    port: "{{item}}"
+    permanent: yes
+    zone: public
+    state: enabled
+  loop: "{{workers.ports}}"
+
+- name: reload firewall
+  systemd:
+    name: firewalld
+    state: reloaded
+
+
+

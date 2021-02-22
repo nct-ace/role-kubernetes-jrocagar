@@ -17,8 +17,14 @@
 - hosts: nodes
   vars:
     nodes:
+      - name: nfs
+        ip: 192.168.188.8
       - name: master
-        ip: 192.168.188.6
+        ip: 192.168.188.9
+      - name: worker1
+        ip: 192.168.188.11
+      - name: worker2
+        ip: 192.168.188.10
     ports:
       - port: 6443/tcp
       - port: 2379-2380/tcp
@@ -26,8 +32,23 @@
       - port: 10251/tcp
       - port: 10252/tcp
       - port: 10255/tcp
+    workers:
+      ports: 
+        - 10250/tcp
+        - 30000-32767/tcp
+    docker:
+      ip: 172.17.0.0
+    cidr:
+      ip: 192.169.0.0
+    reset: false
+    command_join: ""
   roles:
     - role: nodes
+
+- hosts: nodes
+  roles:
+    - role: join-worker
+  
 
 # OBSERVACIONES:
 # - Mirar como podemos coger los ips de los nodos desde los inventarios

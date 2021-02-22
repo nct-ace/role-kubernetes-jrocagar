@@ -1,27 +1,102 @@
 ---
-- name:
-  yum:
-    name: wget
-    state: present
 
-- name:
-  shell: "mkdir -p $HOME/.kube"
+- name: 
+  firewalld:
+    port: "{{item.port}}"
+    permanent: yes
+    state: enabled
+  loop: "{{ports}}"
 
-#- name: 
-#  shell: "cp -i /etc/kubernetes/admin.conf $HOME/.kube/config"
-
-- name:
-  shell: "sudo chown $(id -u):$(id -g) $HOME/.kube/config"
-
-- name:
-  shell: "wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
-
-- name:
-  shell: "kubectl apply -f kube-flannel.yml"
+- name: reload firewall
+  systemd:
+    name: firewalld
+    state: reloaded
 
 - name:
   shell: "kubeadm config images pull"
 
-- name:
-  shell: "kubeadm init --apiserver-advertise-address={{item.ip}} --pod-network-cidr=10.244.0.0/16"
+- name: access from workers
+  firewalld:
+    rich_rule: rule family=ipv4 source address={{item.ip}}/32 accept
+    permanent: yes
+    state: enabled
   loop: "{{nodes}}"
+
+- name: reload firewall
+  systemd:
+    name: firewalld
+    state: reloaded
+
+- name: access container to localhost
+  firewalld:
+    rich_rule: rule family=ipv4 source address={{docker.ip}}/16 accept
+    zone: public
+    permanent: yes
+    state: enabled
+
+- name: reload firewall
+  systemd:
+    name: firewalld
+    state: reloaded
+
+# kubernetes cni
+
+# UNCOMMENT this for using  the play  for the first time
+- name: init CNI kubernetes
+  shell: "kubeadm init  --apiserver-advertise-address={{nodes[1].ip}} --pod-network-cidr {{cidr.ip}}/16"
+  register: init_k8s
+
+- name:
+  debug:
+    msg: "{{init_k8s.stdout}}"
+
+- name: mkdir
+  shell: "mkdir -p /root/.kube"
+
+- name: cp
+  #shell: "cp -i /etc/kubernetes/admin.conf /root/.kube/config"
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: yes
+
+
+- name: chown
+  shell: "chown $(id -u):$(id -g) /root/.kube/config"
+
+
+# install sdn
+- name: intall command get
+  yum:
+    name: wget
+    state: present
+
+# el fichero esta en template, se puede utilizar 
+# sino es posible descargarlo desde internet
+- name: wget
+  shell: "wget https://docs.projectcalico.org/manifests/tigera-operator.yaml"
+
+# UNCOMMENT this for using  the play  for the first time
+- name: kubctl create
+  shell: "kubectl create -f tigera-operator.yaml"
+
+#optional:
+#- name: wget
+#  shell: "wget https://docs.projectcalico.org/manifests/custom-resources.yaml"
+
+- name: change ip in custom-resources.yaml
+  copy:
+    src: ../templates/custom-resources.yaml
+    dest: $HOME/
+    remote_src: no
+
+- name: apply cidr 
+  shell: "kubectl apply -f custom-resources.yaml"
+
+
+
+# OBSERVACIONES:
+# Cada vez que se quiere lanzar el playbook a las maquinas que ya 
+# previamente se han lanzado, hay que resetear el cluster
+# "kubeadm reset" y borrar "$HOME/.kube/config" de la máquina
+# (UTILIZAR: reset_cluster.yml)

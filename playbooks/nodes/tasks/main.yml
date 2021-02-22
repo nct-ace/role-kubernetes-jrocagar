@@ -1,11 +1,27 @@
 ---
 - block:
- # - include_tasks: prerequests.yml
+  - include_tasks: prerequests.yml
+
   - include_tasks: setup_nodes.yml
   
   - include_tasks: init_cluster.yml
-    when: inventory_hostname in groups['master']
+    when: inventory_hostname in groups['master'] and reset!=true
   
+  - include_tasks: workers_setup.yml
+    when: inventory_hostname in groups['workers']
+  
+
+# COMPLETE
+#  - include_tasks: ingress_controller.yml
+#    when: inventory_hostname in groups['master']
+
+# RESET
+  - include_tasks: reset_cluster.yml
+    when: inventory_hostname in groups['nodes']  and reset==true
+
+# NOT FINISHED 
+#  - include_tasks: add_user_no_admin.yml
+#    when: inventory_hostname in groups['master']
 
 
 

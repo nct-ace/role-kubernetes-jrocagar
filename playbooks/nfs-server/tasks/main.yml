@@ -7,13 +7,13 @@
 # create vg and lv
 ##
 
-# - name: create physical volume
-#   shell: "pvcreate /dev/{{disk_device}}"
+- name: create physical volume
+  shell: "pvcreate /dev/{{disk_device}}"
 
-# - name:  create volume group
-#   lvg:
-#     vg: data_vg
-#     pvs: "/dev/{{disk_device}}"
+- name:  create volume group
+  lvg:
+    vg: data_vg
+    pvs: "/dev/{{disk_device}}"
     
 #- name: vg display data_vg
 #  shell: "vgdisplay data_vg"

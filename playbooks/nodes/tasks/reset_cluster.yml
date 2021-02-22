@@ -1,0 +1,8 @@
+---
+- name: reset cluster from kubeadm init
+  shell: "kubeadm reset -f"
+
+- name: remove kube file config
+  file:
+    path: $HOME/.kube/config
+    state: absent

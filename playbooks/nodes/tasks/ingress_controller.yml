@@ -1,0 +1,6 @@
+---
+- name: wget ingress
+  shell: "wget https://raw.githubusercontent.com/haproxytech/kubernetes-ingress/v1.5/deploy/haproxy-ingress.yaml"
+
+- name: kubectl apply ingress
+  shell: "kubectl apply -f haproxy-ingress.yaml" 

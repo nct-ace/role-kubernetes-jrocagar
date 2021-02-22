@@ -1,8 +1,16 @@
 ---
+
+
+# - name: hosts
+#  copy: 
+#    src: ../templates/hosts
+#    dest: /etc/hosts
+
 - name: hosts
-  copy: 
-    src: ../templates/hosts
-    dest: /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{item.ip}} {{item.name}}.k8s.int {{item.name}}"
+  loop: "{{ nodes }}"
 
 - name: install docker 
   yum:
@@ -14,20 +22,29 @@
     state: started
     name: docker
 
+
 - name: Disable SELinux
   selinux:
     state: disabled
 
-#- name: Disable firewall
-#  firewalld:
-#    state: disabled
+  
+# firewall
+- name: br_netfilter
+  modprobe:
+    name: br_netfilter
+    state: present
 
-- name: 
+- name:
   firewalld:
-    port: "{{item.port}}"
-    permanent: yes
+    masquerade: yes
     state: enabled
-  loop: "{{ports}}"
+    permanent: yes
+
+- name: reload firewall
+  systemd:
+    name: firewalld
+    state: reloaded
+
 
 - name: Disable swapping
   shell: "swapoff -a"
@@ -63,3 +80,9 @@
   yum:
     name: kubectl
     state: present
+
+- name: enable kubectl
+  shell: "systemctl enable kubelet.service"
+
+- name: enable docker
+  shell: 'systemctl enable docker.service'

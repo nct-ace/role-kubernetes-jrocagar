@@ -1,0 +1,30 @@
+---
+# tasks file for join-worker
+- block:
+   - name: kubeadm token create 
+     shell: kubeadm token create --print-join-command
+     register: results
+
+   - name:
+     add_host:
+          name:   "JOIN_COMMAND"
+          command:  "{{results.stdout}}"
+   - name: 
+     debug:
+      msg: "{{hostvars['JOIN_COMMAND'].command}} hola"
+  when: inventory_hostname in groups['master']
+
+  
+
+# - name: 
+#   debug:
+#     msg: "{{hostvars['JOIN_COMMAND'].command}}"
+#   when: inventory_hostname in groups['workers']
+- name: 
+  shell: "{{hostvars['JOIN_COMMAND'].command}}"
+  when: inventory_hostname in groups['workers']
+# 
+# - name: join worker
+#   shell: "'{{results.stdout}}'"
+#   when: inventory_hostname in groups['workers']
+  
